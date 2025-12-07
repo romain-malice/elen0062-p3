@@ -12,6 +12,8 @@ from scipy import sparse
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 
+from evaluation import compute_acc
+
 @contextmanager
 def measure_time(label):
     """
@@ -220,4 +222,3 @@ if __name__ == '__main__':
 
     fname = write_submission(predictions=predictions, estimated_score=predicted_score, file_name="results/toy_example_predictions")
     print('Submission file "{}" successfully written'.format(fname))
-
