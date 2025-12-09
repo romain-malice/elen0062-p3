@@ -12,8 +12,6 @@ from scipy import sparse
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 
-from evaluation import compute_acc
-
 @contextmanager
 def measure_time(label):
     """
@@ -193,7 +191,6 @@ if __name__ == '__main__':
     # ------------------------------ Prediction ------------------------------ #
     # Load test data
     X_TS = load_from_csv(prefix+'input_test_set.csv')
-    print(X_TS.shape)
 
     # Same transformation as LS
     X_TS_pairs, _ = make_pair_of_players(X_TS)
