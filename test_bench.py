@@ -13,12 +13,15 @@ from sklearn.utils import check_random_state
 from file_interface import load_from_csv, write_submission
 from features import make_pair_of_players, compute_distance_
 
+from models import test_some_ks_on_knn, test_trees
+from features import make_basic_features
+
 @contextmanager
 def measure_time(label):
     """
     Context manager to measure time of computation.
     >>> with measure_time('Heavy computation'):
-    >>>     do_heavy_computation()
+        >>>     do_heavy_computation()
     'Duration of [Heavy computation]: 0:04:07.765971'
 
     Parameters
@@ -35,26 +38,32 @@ def measure_time(label):
 if __name__ == '__main__':
 
     # ------------------------------- Learning ------------------------------- #
-    # Load training data
+    print("Loading data...")
+
     X_LS = load_from_csv('data/input_train_set.csv')
     y_LS = load_from_csv('data/output_train_set.csv')
-    print(X_LS)
 
-    # Transform data as pair of players
-    # !! This step is only one way of addressing the problem.
-    # We strongly recommend to also consider other approaches that the one provided here.
+    print("Done.")
+    print("Deriving features...")
 
-    X_LS_pairs, y_LS_pairs = make_pair_of_players(X_LS, y_LS)
-    X_LS_pairs["distance"] = compute_distance_(X_LS_pairs)
+    # X_features : (nb_samples, nb_features)
+    X_features, y_features = make_basic_features(X_LS, y_LS)
+    y_features = y_features.to_numpy(dtype=np.float64).ravel()
 
-    X_features = X_LS_pairs[["distance", "same_team"]]
+    print("Done.")
+    k_values = np.array([1, 10, 100, 1000])
+    depths = np.array([10, 100, 500, 1000, 5000, None])
 
-    # Build the model
-    model = DecisionTreeClassifier()
-
-    with measure_time('Training'):
-        print('Training...')
-        model.fit(X_features, y_LS_pairs)
+    print("Testing knn...")
+    means, variances = test_some_ks_on_knn(k_values, X_features, y_features, 5)
+    print(f"Means:\n{means}")
+    print(f"Variances:\n{variances}")
+    print("Done.")
+    print("Testing trees...")
+    means, variances = test_trees(depths, X_features, y_features, 5)
+    print(f"Means:\n{means}")
+    print(f"Variances:\n{variances}")
+    print("Done.")
 
     # ------------------------------ Prediction ------------------------------ #
     # Load test data
@@ -66,24 +75,25 @@ if __name__ == '__main__':
 
     X_TS_features = X_TS_pairs[["distance", "same_team"]]
 
+
     # Predict
-    y_pred = model.predict_proba(X_TS_features)[:,1]
+    #y_pred = model.predict_proba(X_TS_features)[:,1]
 
     # Deriving probas
-    probas = y_pred.reshape(X_TS.shape[0], 22)
+    #probas = y_pred.reshape(X_TS.shape[0], 22)
 
     # Estimated score of the model
-    predicted_score = 0.01 # it is quite logical...
+    #predicted_score = 0.01 # it is quite logical...
 
     # Making the submission file
-    fname = write_submission(probas=probas, estimated_score=predicted_score, file_name="results/toy_example_probas")
-    print('Submission file "{}" successfully written'.format(fname))
+    #fname = write_submission(probas=probas, estimated_score=predicted_score, file_name="results/toy_example_probas")
+    #print('Submission file "{}" successfully written'.format(fname))
 
     # -------------------------- Random Prediction -------------------------- #
 
-    random_state = 0
-    random_state = check_random_state(random_state)
-    predictions = random_state.choice(np.arange(1,23), size=X_TS.shape[0], replace=True)
+    #random_state = 0
+    #random_state = check_random_state(random_state)
+    #predictions = random_state.choice(np.arange(1,23), size=X_TS.shape[0], replace=True)
 
-    fname = write_submission(predictions=predictions, estimated_score=predicted_score, file_name="results/toy_example_predictions")
-    print('Submission file "{}" successfully written'.format(fname))
+    #fname = write_submission(predictions=predictions, estimated_score=predicted_score, file_name="results/toy_example_predictions")
+    #print('Submission file "{}" successfully written'.format(fname))

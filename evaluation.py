@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from numpy.typing import NDArray
 
 from sklearn.neighbors import KNeighborsClassifier  # knn
@@ -37,7 +38,7 @@ def make_model(model, parameter):
         return DecisionTreeClassifier(max_depth=parameter)
     else:
         return
-        
+
 
 def k_fold_cv(k, parameter, model, x_learn, y_learn):
     """
@@ -55,8 +56,8 @@ def k_fold_cv(k, parameter, model, x_learn, y_learn):
         y_to_fit = y_subsets.copy()
         del y_to_fit[i]
         
-        x_to_fit = np.concatenate(x_to_fit, axis=0)
-        y_to_fit = np.concatenate(y_to_fit, axis=0)
+        x_to_fit = pd.concat(x_to_fit, axis=0, ignore_index=True)
+        y_to_fit = pd.concat(y_to_fit, axis=0, ignore_index=True)
         
         if model == 'knn':
             if parameter >= len(y_to_fit):
@@ -64,11 +65,8 @@ def k_fold_cv(k, parameter, model, x_learn, y_learn):
         
         model = make_model(model, parameter)
         if hasattr(model, "fit") and hasattr(model, "score"):
-            model.fit(np.concatenate(x_to_fit, axis=0),
-                     np.concatenate(y_to_fit, axis=0))
+            model.fit(x_to_fit, y_to_fit)
             errors[i] = 1 - model.score(x, y)
         else:
             raise(TypeError(f"Wrong argument type for `model`. Expected a sklearn classifier but got {type(model)}"))
     return np.mean(errors), np.var(errors)
-
-

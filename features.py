@@ -40,3 +40,9 @@ def compute_distance_(X_):
 
     d = np.sqrt((X_["x_sender"]-X_["x_j"])**2 + (X_["y_sender"]-X_["y_j"])**2)
     return d
+
+def make_basic_features(x, y=None):
+    X_LS_pairs, y_LS_pairs = make_pair_of_players(x, y)
+    X_LS_pairs["distance"] = compute_distance_(X_LS_pairs)
+
+    return X_LS_pairs[["distance", "same_team"]], y_LS_pairs
