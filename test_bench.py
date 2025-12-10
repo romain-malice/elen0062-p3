@@ -13,7 +13,7 @@ from sklearn.utils import check_random_state
 from file_interface import load_from_csv, write_submission
 from features import make_pair_of_players, compute_distance_
 
-from models import test_some_ks_on_knn, test_trees
+from models import test_some_ks_on_knn, test_trees, test_svm
 from features import make_basic_features
 
 @contextmanager
@@ -51,19 +51,34 @@ if __name__ == '__main__':
     y_features = y_features.to_numpy(dtype=np.float64).ravel()
 
     print("Done.")
-    k_values = np.array([1, 10, 100, 1000])
-    depths = np.array([10, 100, 500, 1000, 5000, None])
 
-    print("Testing knn...")
-    means, variances = test_some_ks_on_knn(k_values, X_features, y_features, 5)
-    print(f"Means:\n{means}")
-    print(f"Variances:\n{variances}")
-    print("Done.")
-    print("Testing trees...")
-    means, variances = test_trees(depths, X_features, y_features, 5)
-    print(f"Means:\n{means}")
-    print(f"Variances:\n{variances}")
-    print("Done.")
+    knn = True
+    if knn is True:
+        print("\nTesting knn...")
+        k_values = np.array([50, 100, 200, 500])
+        print(f"Tested values of k: {k_values}")
+        means, variances = test_some_ks_on_knn(k_values, X_features, y_features, 5)
+        print(f"Mean accuracies:\n{means}")
+        print(f"Accuracies variance:\n{variances}")
+        print("Done.")
+
+    tree = True
+    if tree is True:
+        print("\nTesting trees...")
+        depths = np.array([5, 10, 15, 20])
+        print(f"Tested tree depths: {depths}")
+        means, variances = test_trees(depths, X_features, y_features, 5)
+        print(f"Mean accuracies:\n{means}")
+        print(f"Accuracies variance:\n{variances}")
+        print("Done.")
+
+    svm = False
+    if svm is True:
+        print("Testing SVM...")
+        means, variances = test_svm(X_features, y_features, 5)
+        print(f"Mean accuracies:\n{means}")
+        print(f"Accuracies variance:\n{variances}")
+        print("Done.")
 
     # ------------------------------ Prediction ------------------------------ #
     # Load test data

@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import cross_val_score
+from sklearn.svm import SVC
 
 def test_some_ks_on_knn(ks, x, y, nb_splits):
     means = np.zeros_like(ks, dtype=float)
@@ -23,3 +24,10 @@ def test_trees(depths, x, y, nb_splits):
         means[idx] = np.mean(scores)
         variances[idx] = np.var(scores)
     return means, variances
+
+def test_svm(x, y, nb_splits):
+    clf = SVC()
+    scores = cross_val_score(clf, x, y, cv=nb_splits, scoring='accuracy')
+    mean = np.mean(scores)
+    variance = np.var(scores)
+    return mean, variance
