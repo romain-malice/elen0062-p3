@@ -46,3 +46,21 @@ def make_basic_features(x, y=None):
     X_LS_pairs["distance"] = compute_distance_(X_LS_pairs)
 
     return X_LS_pairs[["distance", "same_team"]], y_LS_pairs
+def positions_array(X_):
+    n = X_.shape[0]
+    positions = np.zeros((n, 22, 2))
+    for j in range(22):
+        positions[:, j, 0] = X_[f"x_{j+1}"].values
+        positions[:, j, 1] = X_[f"y_{j+1}"].values
+    return positions
+
+def distances_array(positions):
+    diff = positions[:, :, None, :] - positions[:, None, :, :]
+    distances = np.linalg.norm(diff, axis=-1)   
+    return distances
+
+def distances_to_goal(positions):    
+    return
+
+def make_advanced_features(distances):    
+    return 
