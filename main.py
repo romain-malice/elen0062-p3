@@ -57,11 +57,11 @@ if __name__ == '__main__':
         X_LS_features, y_LS_features = make_features(X_LS, y_LS)
         write_features_file(X_LS_features, "X_LS")
         write_features_file(y_LS_features, "y_LS")
-        y_LS_features = y_LS_features.to_numpy().ravel()
+        y_LS_features = y_LS_features.values
     else:
         X_LS_features = load_from_csv(os.path.join("features", "X_LS.csv"))
         y_LS_features = load_from_csv(os.path.join("features", "y_LS.csv"))
-        y_LS_features = y_LS_features.to_numpy().ravel()
+        y_LS_features = y_LS_features.values
 
     print("Done.")
 
@@ -123,7 +123,6 @@ if __name__ == '__main__':
     proba = clf.predict_proba(X_TS_features)
     player = proba_to_player(proba, nb_passes_TS)
     proba = proba[:, 1].reshape(nb_passes_TS, 22) 
-    print(proba)
 
     # Estimated score of the model
     predicted_score = 0.31
