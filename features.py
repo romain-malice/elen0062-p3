@@ -31,19 +31,20 @@ def make_features(X_, y_=None):
     y_pairs = pd.DataFrame(data=np.zeros((nb_passes*22,1)), columns=np.array(["pass"]))
     idx = 0
     for i in range(nb_passes):
-        sender = X_.iloc[i].sender_id - 1
+        sender = X_.at[i, 'sender_id'] - 1
         if sender <= 10:
             teammates = np.arange(0, 11)
             opponents = np.arange(11, 22)
         else:
             teammates = np.arange(11, 22)
             opponents = np.arange(0, 11)
+
         for receiver in teammates:
             dist_s_r = distances[i, sender, receiver]
             d_min_s_opp = min(distances[i, sender, opponents])
-            d_min_s_teammate = min(distances[i, sender, teammates])
+            d_min_s_teammate = min(distances[i, sender, teammates[teammates != sender]])
             d_min_r_opp = min(distances[i, receiver, opponents])
-            d_min_r_teammate = min(distances[i, receiver, teammates])
+            d_min_r_teammate = min(distances[i, receiver, teammates[teammates != receiver]])
             
             X_pairs.iloc[idx] = [sender + 1, receiver + 1, 1, dist_s_r, d_min_s_opp, d_min_s_teammate,
                                   d_min_r_opp, d_min_r_teammate]
@@ -54,9 +55,9 @@ def make_features(X_, y_=None):
         for receiver in opponents:
             dist_s_r = distances[i, sender, receiver]
             d_min_s_opp = min(distances[i, sender, opponents])
-            d_min_s_teammate = min(distances[i, sender, teammates])
+            d_min_s_teammate = min(distances[i, sender, teammates[teammates != sender]])
             d_min_r_opp = min(distances[i, receiver, teammates])
-            d_min_r_teammate = min(distances[i, receiver, opponents])
+            d_min_r_teammate = min(distances[i, receiver, opponents[opponents != receiver]])
             
             X_pairs.iloc[idx] = [sender + 1, receiver + 1, 0, dist_s_r, d_min_s_opp, d_min_s_teammate,
                                   d_min_r_opp, d_min_r_teammate]

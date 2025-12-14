@@ -11,10 +11,9 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_random_state
 
 from file_interface import load_from_csv, write_submission
-from features import make_pair_of_players, compute_distance_
 
 from models import test_some_ks_on_knn, test_trees, test_svm
-from features import make_basic_features
+from features import make_features
 
 @contextmanager
 def measure_time(label):
@@ -47,12 +46,22 @@ if __name__ == '__main__':
     print("Deriving features...")
 
     # X_features : (nb_samples, nb_features)
-    X_features, y_features = make_basic_features(X_LS, y_LS)
+    X_features, y_features = make_features(X_LS, y_LS)
     y_features = y_features.to_numpy(dtype=np.float64).ravel()
 
     print("Done.")
 
-    knn = True
+    print("Learning with a simple tree...")
+
+    clf = DecisionTreeClassifier(max_depth=10)
+    clf.fit(X_features, y_features)
+
+    print("Done.")
+
+    
+    # ------------------------------- Cross validation ------------------------------- #
+
+    knn = False
     if knn is True:
         print("\nTesting knn...")
         k_values = np.array([50, 100, 200, 500])
@@ -62,7 +71,7 @@ if __name__ == '__main__':
         print(f"Accuracies variance:\n{variances}")
         print("Done.")
 
-    tree = True
+    tree = False
     if tree is True:
         print("\nTesting trees...")
         depths = np.array([5, 10, 15, 20])
@@ -85,10 +94,12 @@ if __name__ == '__main__':
     X_TS = load_from_csv('data/input_test_set.csv')
 
     # Same transformation as LS
-    X_TS_pairs, _ = make_pair_of_players(X_TS)
-    X_TS_pairs["distance"] = compute_distance_(X_TS_pairs)
+    X_TS_pairs, _ = make_features(X_TS)
+    print(X_TS_pairs)
 
-    X_TS_features = X_TS_pairs[["distance", "same_team"]]
+    #X_TS_pairs["distance"] = compute_distance_(X_TS_pairs)
+
+    #X_TS_features = X_TS_pairs[["distance", "same_team"]]
 
 
     # Predict
