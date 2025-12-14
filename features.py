@@ -48,7 +48,7 @@ def make_features(X_, y_=None):
             X_pairs.iloc[idx] = [sender + 1, receiver + 1, 1, dist_s_r, d_min_s_opp, d_min_s_teammate,
                                   d_min_r_opp, d_min_r_teammate]
             if not y_ is None:
-                y_pairs.loc[idx, "pass"] = int(receiver == y_.iloc[i].values[0])
+                y_pairs.loc[idx, "pass"] = int(receiver == y_.iloc[i].values[0] - 1)
             idx += 1
             
         for receiver in opponents:
@@ -61,11 +61,7 @@ def make_features(X_, y_=None):
             X_pairs.iloc[idx] = [sender + 1, receiver + 1, 0, dist_s_r, d_min_s_opp, d_min_s_teammate,
                                   d_min_r_opp, d_min_r_teammate]
             if not y_ is None:
-                y_pairs.loc[idx, "pass"] = int(receiver == y_.iloc[i].values[0])
+                y_pairs.loc[idx, "pass"] = int(receiver == y_.iloc[i].values[0] - 1)
             idx += 1           
                
     return X_pairs, y_pairs
-
-
-
-
