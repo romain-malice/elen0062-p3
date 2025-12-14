@@ -1,11 +1,15 @@
 import pandas as pd
+import numpy as np
 
-d = {'col1': [1, 2, 3, 4, 5], 'col2': [6, 7, 8, 9, 10]}
-df = pd.DataFrame(data=d)
+from file_interface import load_from_csv
+from features import same_team_
 
-part_of_df = df[1:3].copy()
+X = load_from_csv("data/input_train_set.csv")
+y = load_from_csv("data/output_train_set.csv")
 
-df = df.drop(index=[1, 2])
+nb_failed = 0
+for sender, receiver in zip(X['sender_id'], y['receiver_id']):
+    if not same_team_(sender, receiver):
+        nb_failed += 1
 
-print(df)
-print(part_of_df)
+print(nb_failed/len(y))

@@ -21,7 +21,6 @@ if example == 1:
     
     distances = np.linalg.norm(diff, axis=-1)
     
-    
 if example == 2:
     positions = np.array([[1,2,3],
                           [10,20,30],
