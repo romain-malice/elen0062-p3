@@ -1,7 +1,7 @@
 import numpy as np
 
 
-example = 0
+example = 1
 
 if example == 0:   
     
@@ -17,7 +17,14 @@ if example == 1:
                           [(1,1),(1,6),(1,10)]])
     
     diff = positions[:, :, None, :] - positions[:, None, :, :]
+    print(diff[0][0])
     
     distances = np.linalg.norm(diff, axis=-1)
     
-    print(distances[2,1,2])
+    
+if example == 2:
+    positions = np.array([[1,2,3],
+                          [10,20,30],
+                          [100,200,300]])
+    summ = positions[:, None] + positions[None, :]
+    print(summ[0,1,0])
