@@ -1,6 +1,13 @@
 import numpy as np
 import pandas as pd
+import time
+import os
 
+def same_team_(sender,player_j):
+    if sender <= 11:
+        return player_j <= 11
+    else:
+        return player_j > 11
 
 def positions_array(X_):
     n = X_.shape[0]
@@ -17,8 +24,9 @@ def distances_array(X_):
     return distances
 
 def distances_to_goal(X_):
-    positions = positions_array()
+    # TODO
 
+    positions = positions_array()
     return
 
 
@@ -30,8 +38,8 @@ def make_features(X_, y_=None):
     X_pairs = pd.DataFrame(data=np.zeros((nb_passes*22, len(columns_name))), columns=columns_name)
     y_pairs = pd.DataFrame(data=np.zeros((nb_passes*22,1)), columns=np.array(["pass"]))
     idx = 0
-    for i in range(nb_passes):
-        sender = X_.at[i, 'sender_id'] - 1
+    for i, pass_idx in enumerate(X_.index):
+        sender = X_.loc[pass_idx, "sender_id"] - 1
         if sender <= 10:
             teammates = np.arange(0, 11)
             opponents = np.arange(11, 22)
@@ -39,30 +47,28 @@ def make_features(X_, y_=None):
             teammates = np.arange(11, 22)
             opponents = np.arange(0, 11)
 
-        for receiver in teammates:
+        for receiver in range(0, 22):
+            same_team = same_team_(sender, receiver)
+
             dist_s_r = distances[i, sender, receiver]
             d_min_s_opp = min(distances[i, sender, opponents])
             d_min_s_teammate = min(distances[i, sender, teammates[teammates != sender]])
-            d_min_r_opp = min(distances[i, receiver, opponents])
-            d_min_r_teammate = min(distances[i, receiver, teammates[teammates != receiver]])
+
+            if same_team is True:
+                d_min_r_opp = min(distances[i, receiver, opponents])
+                d_min_r_teammate = min(distances[i, receiver, teammates[teammates != receiver]])
+            else:
+                d_min_r_opp = min(distances[i, receiver, teammates])
+                d_min_r_teammate = min(distances[i, receiver, opponents[opponents != receiver]])
             
-            X_pairs.iloc[idx] = [sender + 1, receiver + 1, 1, dist_s_r, d_min_s_opp, d_min_s_teammate,
+            X_pairs.iloc[idx] = [sender + 1, receiver + 1, int(same_team), dist_s_r, d_min_s_opp, d_min_s_teammate,
                                   d_min_r_opp, d_min_r_teammate]
             if not y_ is None:
-                y_pairs.loc[idx, "pass"] = int(receiver == y_.iloc[i].values[0] - 1)
+                y_pairs.loc[idx, "pass"] = int(receiver == y_.loc[pass_idx].values[0] - 1)
             idx += 1
-            
-        for receiver in opponents:
-            dist_s_r = distances[i, sender, receiver]
-            d_min_s_opp = min(distances[i, sender, opponents])
-            d_min_s_teammate = min(distances[i, sender, teammates[teammates != sender]])
-            d_min_r_opp = min(distances[i, receiver, teammates])
-            d_min_r_teammate = min(distances[i, receiver, opponents[opponents != receiver]])
-            
-            X_pairs.iloc[idx] = [sender + 1, receiver + 1, 0, dist_s_r, d_min_s_opp, d_min_s_teammate,
-                                  d_min_r_opp, d_min_r_teammate]
-            if not y_ is None:
-                y_pairs.loc[idx, "pass"] = int(receiver == y_.iloc[i].values[0] - 1)
-            idx += 1           
-               
+
     return X_pairs, y_pairs
+
+def write_features_file(features, name):
+    file_name = '{}.csv'.format(name)
+    features.to_csv(path_or_buf=os.path.join("features", file_name))

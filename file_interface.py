@@ -20,7 +20,7 @@ def load_from_csv(path, delimiter=','):
     """
     return pd.read_csv(path, delimiter=delimiter, index_col=0)
 
-def write_submission(predictions=None, probas=None, estimated_score=0, file_name="submission", date=True, indexes=None):
+def write_submission(predictions=None, probas=None, estimated_score=0.0, file_name="submission", date=True, indexes=None):
     """
     Write a submission file for the Kaggle platform
 
@@ -48,7 +48,7 @@ def write_submission(predictions=None, probas=None, estimated_score=0, file_name
     """
 
     if date:
-        file_name = '{}_{}'.format(file_name, time.strftime('%d-%m-%Y_%Hh%M'))
+        file_name = '{}_{}'.format(file_name, time.strftime('%d-%m-%y_%hh%m'))
 
     file_name = '{}.txt'.format(file_name)
 
