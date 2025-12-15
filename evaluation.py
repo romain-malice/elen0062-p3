@@ -6,22 +6,24 @@ from sklearn.neighbors import KNeighborsClassifier  # knn
 from sklearn.tree import DecisionTreeClassifier     # tree
 
 
-def proba_to_player(y_proba, nb_passes):
-    good_shape = y_proba[:, 1].reshape(nb_passes, 22) 
-    return np.argmax(good_shape, axis=1) + 1
+def proba_to_player(proba_pairs):
+    nb_passes = proba_pairs.shape[0] // 22
+    proba_passes = proba_pairs[:, 1].reshape(nb_passes, 22) 
+    player_predictions  = np.argmax(proba_passes, axis=1) + 1
+    return player_predictions, proba_passes
 
 
-def accuracy(y, y_pred):
-    # Check if size matches
-    nb_samples = len(y)
-    if y_pred.size != nb_samples:
-        raise ValueError("y_true and y_prediction msut have the same size")
-    
-    # Compute number of right predictions
-    nb_right_predictions = (y == y_pred).sum()
+def accuracy(clf, X_TS_pairs, y_TS_pairs):
+    nb_passes = X_TS_pairs.shape[0] // 22
+    y_TS_pairs = y_TS_pairs["pass"].values
+    player_target = np.argmax(y_TS_pairs.reshape(nb_passes, 22), axis=1) + 1
 
-    # Compute accuracy
-    return (nb_right_predictions / nb_samples)
+    proba_pairs = clf.predict_proba(X_TS_pairs)
+    player_predictions, _ = proba_to_player(proba_pairs)
+
+    nb_right_predictions = (player_predictions == player_target).sum()
+
+    return (nb_right_predictions / nb_passes)
 
 def brier_score(y_true: NDArray[np.int64], p_predict: NDArray[np.float64]) -> float:
     # Number of observations
@@ -48,46 +50,20 @@ def k_fold_cv_score(X, y, k, training_model):
              for i in range(k)]
     scores = np.zeros(k)
     for i in range(k):
-        x_to_fit = parts_X[:k] + parts_X[k+1:]   
+        x_to_fit = parts_X[:i] + parts_X[i+1:]   
         x_to_fit = pd.concat(x_to_fit, ignore_index=True)
 
-        y_to_fit = parts_y[:k] + parts_y[k+1:] 
-        y_to_fit : pd.concat(y_to_fit, ignore_index=True)
+        y_to_fit = parts_y[:i] + parts_y[i+1:] 
+        y_to_fit = pd.concat(y_to_fit, ignore_index=True)
         
         x_to_test = parts_X[i].reset_index(drop=True)
         y_to_test = parts_y[i].reset_index(drop=True)
-        
+      
         trained_model = training_model(x_to_fit, y_to_fit)
-        #s'occuper du changement de formulation
-        scores[i] = trained_model.s
+        
+        scores[i] = accuracy(trained_model, x_to_test, y_to_test)
     
-
-    
-    return
-
-# def k_fold_cv_tree(k, depth, x_learn, y_learn):
-#     """
-#     Returns the cross validation error for a given number 
-#     of subsets k, a given depth and a given learning datset.
-
-#     """
-#     x_subsets = np.array_split(x_learn, k)
-#     y_subsets = np.array_split(y_learn, k)
-#     for x, y, i in zip(x_subsets, y_subsets, range(k)):
-#         x_to_fit = x_subsets.copy()
-#         del x_to_fit[i]
-#         y_to_fit = y_subsets.copy()
-#         del y_to_fit[i]
-
-#         tree = DecisionTreeClassifier(max_depth=depth)
-#         tree.fit(np.concatenate(x_to_fit, axis=0),
-#                  np.concatenate(y_to_fit, axis=0))
-#         errors[i] = 1 - tree.score(x, y)
-
-#     return np.mean(errors)
-
-
-
+    return np.mean(scores)
 
 
 if __name__ == "__main__":
