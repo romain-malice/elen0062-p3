@@ -31,8 +31,11 @@ def distances_to_goal(X_):
     return
 
 def angle_array(X):
+    """
+    Computes angular position of each player w.r.t. the sender
+    """
     positions = positions_array(X)
-    senders = X["sender_id"].values
+    senders = X["sender_id"].values - 1
     angles = np.zeros([len(senders), 22])
     # Iterate over all passes
     for i, sender in enumerate(senders):
@@ -49,11 +52,11 @@ def angle_array(X):
 def make_features(X_, y_=None):
     nb_passes = X_.shape[0]
     distances = distances_array(X_)
+    angles = angle_array(X_)
     columns_name  = ["sender", "receiver","same team", "dist_s_r", "d_min_s_opp", "d_min_s_teammate", 
-                     "d_min_r_opp", "d_min_r_teammate"]
+                     "d_min_r_opp", "d_min_r_teammate", "r_demarcation"]
     X_pairs = pd.DataFrame(data=np.zeros((nb_passes*22, len(columns_name))), columns=columns_name)
     y_pairs = pd.DataFrame(data=np.zeros((nb_passes*22,1)), columns=np.array(["pass"]))
-    idx = 0
     for i, pass_idx in enumerate(X_.index):
         sender = X_.loc[pass_idx, "sender_id"] - 1
         if sender <= 10:
@@ -62,6 +65,15 @@ def make_features(X_, y_=None):
         else:
             teammates = np.arange(11, 22)
             opponents = np.arange(0, 11)
+
+        # Player visibility
+        sort_indices = np.argsort(angles[i])
+        inverse_indices = np.argsort(sort_indices)
+
+        sorted_angles = angles[i, sort_indices]
+        continuous_sorted_angles = np.concatenate(([sorted_angles[-1] - 2*np.pi], sorted_angles, [sorted_angles[0] + 2*np.pi]))
+        view_angles_wrong_idx = continuous_sorted_angles[2:] - continuous_sorted_angles[:-2]
+        view_angles = view_angles_wrong_idx[inverse_indices]
 
         for receiver in range(0, 22):
             same_team = same_team_(sender, receiver)
@@ -77,11 +89,10 @@ def make_features(X_, y_=None):
                 d_min_r_opp = min(distances[i, receiver, teammates])
                 d_min_r_teammate = min(distances[i, receiver, opponents[opponents != receiver]])
             
-            X_pairs.iloc[idx] = [sender + 1, receiver + 1, int(same_team), dist_s_r, d_min_s_opp, d_min_s_teammate,
-                                  d_min_r_opp, d_min_r_teammate]
+            X_pairs.loc[pass_idx] = [sender + 1, receiver + 1, int(same_team), dist_s_r, d_min_s_opp, d_min_s_teammate,
+                                  d_min_r_opp, d_min_r_teammate, view_angles[receiver]]
             if not y_ is None:
-                y_pairs.loc[idx, "pass"] = int(receiver == y_.loc[pass_idx].values[0] - 1)
-            idx += 1
+                y_pairs.loc[pass_idx, "pass"] = int(receiver == y_.loc[pass_idx].values[0] - 1)
 
     return X_pairs, y_pairs
 

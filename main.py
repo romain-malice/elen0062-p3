@@ -7,9 +7,7 @@ import datetime
 from contextlib import contextmanager
 
 import numpy as np
-from sklearn.metrics import make_scorer
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import cross_val_score, KFold
 
 from file_interface import load_from_csv, write_submission
 
@@ -67,7 +65,6 @@ if __name__ == '__main__':
     print("Done.")
 
     print("Learning with a simple tree...")
-    
     
     clf = basic_tree(X_LS_pairs, y_LS_pairs)
     
