@@ -34,6 +34,12 @@ def measure_time(label):
     end = time.time()
     print('Duration of [{}]: {}'.format(label,
                                         datetime.timedelta(seconds=end-start)))
+    
+def basic_tree(X_LS_pairs, y_LS_pairs):
+    max_depth = 10
+    clf = DecisionTreeClassifier(max_depth=max_depth)
+    clf.fit(X_LS_pairs, y_LS_pairs)
+    return clf
 
 if __name__ == '__main__':
 
@@ -51,21 +57,19 @@ if __name__ == '__main__':
     # X_features : (nb_samples, nb_features)
     new_features = True
     if new_features is True:
-        X_LS_features, y_LS_features = make_features(X_LS, y_LS)
-        write_features_file(X_LS_features, "X_LS")
-        write_features_file(y_LS_features, "y_LS")
-        y_LS_features = y_LS_features.to_numpy().ravel()
+        X_LS_pairs, y_LS_pairs = make_features(X_LS, y_LS)
+        write_features_file(X_LS_pairs, "X_LS")
+        write_features_file(y_LS_pairs, "y_LS")
     else:
-        X_LS_features = load_from_csv(os.path.join("features", "X_LS.csv"))
-        y_LS_features = load_from_csv(os.path.join("features", "y_LS.csv"))
-        y_LS_features = y_LS_features.to_numpy().ravel()
+        X_LS_pairs = load_from_csv(os.path.join("features", "X_LS.csv"))
+        y_LS_pairs = load_from_csv(os.path.join("features", "y_LS.csv"))
 
     print("Done.")
 
     print("Learning with a simple tree...")
-
-    clf = DecisionTreeClassifier(max_depth=10)
-    clf.fit(X_LS_features, y_LS_features)
+    
+    
+    clf = basic_tree(X_LS_pairs, y_LS_pairs)
     
 
     print("Done.")
@@ -76,7 +80,7 @@ if __name__ == '__main__':
     print("Evalution of the accuracy with cross validation...")
     
     k = 5
-    cv_score = k_fold_cv_score(X_LS_features, y_LS_features, k, )
+    cv_score = k_fold_cv_score(X_LS_pairs, y_LS_pairs, k, basic_tree)
     
     print("Done.")  
     
@@ -89,20 +93,19 @@ if __name__ == '__main__':
     # Same transformation as LS
     new_features = True
     if new_features is True:
-        X_TS_features, _ = make_features(X_TS)
-        write_features_file(X_TS_features, "X_TS")
+        X_TS_pairs, _ = make_features(X_TS)
+        write_features_file(X_TS_pairs, "X_TS")
     else:
-        X_TS_features = load_from_csv(os.path.join("features", "X_TS.csv"))
+        X_TS_pairs = load_from_csv(os.path.join("features", "X_TS.csv"))
 
     # Predict
-    proba = clf.predict_proba(X_TS_features)
-    player = proba_to_player(proba, nb_passes_TS)
-    proba = proba[:, 1].reshape(nb_passes_TS, 22) 
+    proba_pairs = clf.predict_proba(X_TS_pairs)
+    player_predictions, proba_passes = proba_to_player(proba_pairs)
     
 
     # Estimated score of the model
     predicted_score = cv_score
 
     # Making the submission file
-    fname = write_submission(predictions=player, probas=proba, estimated_score=predicted_score, file_name="results/submission_de_francois_et_romain")
+    fname = write_submission(predictions=player_predictions, probas=proba_passes, estimated_score=predicted_score, file_name="results/submission")
     print('Submission file "{}" successfully written'.format(fname))
