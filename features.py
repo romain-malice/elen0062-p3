@@ -1,3 +1,4 @@
+import enum
 import numpy as np
 import pandas as pd
 import time
@@ -29,6 +30,21 @@ def distances_to_goal(X_):
     positions = positions_array()
     return
 
+def angle_array(X):
+    positions = positions_array(X)
+    senders = X["sender_id"].values
+    angles = np.zeros([len(senders), 22])
+    # Iterate over all passes
+    for i, sender in enumerate(senders):
+        x_s, y_s = positions[i, sender, :]
+        x_r, y_r = np.split(positions[i, :, :], 2, axis=1)
+
+        delta_y = y_r - y_s # (nb_passes x nb_players)
+        delta_x = x_r - x_s # "
+    
+        angles[i] = np.arctan2(delta_y, delta_x).T
+
+    return angles
 
 def make_features(X_, y_=None):
     nb_passes = X_.shape[0]
