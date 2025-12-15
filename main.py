@@ -67,7 +67,6 @@ if __name__ == '__main__':
     print("Learning with a simple tree...")
     
     clf = basic_tree(X_LS_pairs, y_LS_pairs)
-    
 
     print("Done.")
 

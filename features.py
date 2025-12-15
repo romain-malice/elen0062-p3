@@ -57,6 +57,7 @@ def make_features(X_, y_=None):
                      "d_min_r_opp", "d_min_r_teammate", "r_demarcation"]
     X_pairs = pd.DataFrame(data=np.zeros((nb_passes*22, len(columns_name))), columns=columns_name)
     y_pairs = pd.DataFrame(data=np.zeros((nb_passes*22,1)), columns=np.array(["pass"]))
+    idx = 0
     for i, pass_idx in enumerate(X_.index):
         sender = X_.loc[pass_idx, "sender_id"] - 1
         if sender <= 10:
@@ -89,10 +90,11 @@ def make_features(X_, y_=None):
                 d_min_r_opp = min(distances[i, receiver, teammates])
                 d_min_r_teammate = min(distances[i, receiver, opponents[opponents != receiver]])
             
-            X_pairs.loc[pass_idx] = [sender + 1, receiver + 1, int(same_team), dist_s_r, d_min_s_opp, d_min_s_teammate,
+            X_pairs.iloc[idx] = [sender + 1, receiver + 1, int(same_team), dist_s_r, d_min_s_opp, d_min_s_teammate,
                                   d_min_r_opp, d_min_r_teammate, view_angles[receiver]]
             if not y_ is None:
-                y_pairs.loc[pass_idx, "pass"] = int(receiver == y_.loc[pass_idx].values[0] - 1)
+                y_pairs.loc[idx, "pass"] = int(receiver == y_.loc[pass_idx].values[0] - 1)
+            idx += 1
 
     return X_pairs, y_pairs
 
