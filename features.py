@@ -25,8 +25,7 @@ def distances_array(X_):
     return distances
 
 def distances_to_goal(X_):
-    # TODO
-
+    
     positions = positions_array()
     return
 
@@ -51,10 +50,11 @@ def angle_array(X):
 
 def make_features(X_, y_=None):
     nb_passes = X_.shape[0]
+    positions = positions_array(X_)
     distances = distances_array(X_)
     angles = angle_array(X_)
-    columns_name  = ["sender", "receiver","same team", "dist_s_r", "d_min_s_opp", "d_min_s_teammate", 
-                     "d_min_r_opp", "d_min_r_teammate", "r_demarcation"]
+    columns_name  = ["pass_i", "sender", "receiver","same team", "dist_s_r", "d_min_s_opp", "d_min_s_teammate", 
+                     "d_min_r_opp", "d_min_r_teammate", "r_demarcation", "d_cm_team_s", "d_cm_team_r", "d_cm_opp_s", "d_cm_opps_r"]
     X_pairs = pd.DataFrame(data=np.zeros((nb_passes*22, len(columns_name))), columns=columns_name)
     y_pairs = pd.DataFrame(data=np.zeros((nb_passes*22,1)), columns=np.array(["pass"]))
     idx = 0
@@ -66,6 +66,13 @@ def make_features(X_, y_=None):
         else:
             teammates = np.arange(11, 22)
             opponents = np.arange(0, 11)
+
+        # Center of mass
+        cm_team = positions[i, teammates].mean(axis=0)
+        cm_opp = positions[i, teammates].mean(axis=0)
+
+        d_cm_team_s = np.linalg.norm(positions[i, sender] - cm_team)
+        d_cm_opp_s = np.linalg.norm(positions[i, sender] - cm_opp)
 
         # Player visibility
         sort_indices = np.argsort(angles[i])
@@ -79,6 +86,10 @@ def make_features(X_, y_=None):
         for receiver in range(0, 22):
             same_team = same_team_(sender, receiver)
 
+            d_team = np.linalg.norm(positions[i, receiver] - cm_team)
+            d_opp = np.linalg.norm(positions[i, receiver] - cm_opp)
+            d_cm_team_r, d_cm_opp_r = (d_team, d_opp) if same_team else (d_opp, d_team)
+
             dist_s_r = distances[i, sender, receiver]
             d_min_s_opp = min(distances[i, sender, opponents])
             d_min_s_teammate = min(distances[i, sender, teammates[teammates != sender]])
@@ -90,8 +101,8 @@ def make_features(X_, y_=None):
                 d_min_r_opp = min(distances[i, receiver, teammates])
                 d_min_r_teammate = min(distances[i, receiver, opponents[opponents != receiver]])
             
-            X_pairs.iloc[idx] = [sender + 1, receiver + 1, int(same_team), dist_s_r, d_min_s_opp, d_min_s_teammate,
-                                  d_min_r_opp, d_min_r_teammate, view_angles[receiver]]
+            X_pairs.iloc[idx] = [pass_idx, sender + 1, receiver + 1, int(same_team), dist_s_r, d_min_s_opp, d_min_s_teammate,
+                                  d_min_r_opp, d_min_r_teammate, view_angles[receiver], d_cm_team_s, d_cm_team_r, d_cm_opp_s, d_cm_opp_r]
             if not y_ is None:
                 y_pairs.loc[idx, "pass"] = int(receiver == y_.loc[pass_idx].values[0] - 1)
             idx += 1
