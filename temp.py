@@ -14,3 +14,8 @@ opps = np.arange(5, 10)
 for i in range(3):
     print(positions[i, teammates].mean(axis=0))
     print(positions[i, opps].mean(axis=0))
+
+a = np.arange(10)
+mask = [0, 2]
+
+print(a[mask])
