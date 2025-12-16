@@ -2,9 +2,6 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from sklearn.neighbors import KNeighborsClassifier  # knn
-from sklearn.tree import DecisionTreeClassifier     # tree
-
 
 def proba_to_player(proba_pairs):
     nb_passes = proba_pairs.shape[0] // 22
