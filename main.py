@@ -17,7 +17,14 @@ from features import make_features, write_features_file
 from evaluation import proba_to_player, accuracy, k_fold_cv_score
 from tuning import tuning
 
-from models import tree, knn, svm
+from models import tree, knn, random_forest
+
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    message=".*swapaxes.*",
+    category=FutureWarning
+)
 
 @contextmanager
 def measure_time(label):
@@ -50,17 +57,16 @@ if __name__ == '__main__':
         X_tuning = load_from_csv('data/input_train_set.csv')
         y_tuning = load_from_csv('data/output_train_set.csv')
         
-        models = [tree, knn, svm]
-        models_names = ["tree", "knn", "svm"]
-        tree_parameters = [5, 10, 20, 30, 50]
-        knn_parameters = [1, 5, 10, 20, 30]
-        svm_parameters = [0.01, 0.1, 1, 10, 100] 
-        
+        models = [tree, knn, random_forest]
+        models_names = ["tree", "knn", "random forest"]
+        tree_parameters = [5, 8, 10, 15, 20, 50, 70, 100]
+        knn_parameters = [1, 5]
+        forest_parameters = [25, 40, 60, 80, 95, 100, 105, 110, 120, 150]
         model_name, parameter, score = tuning(X_tuning, y_tuning, models, models_names,
-                                  tree_parameters, knn_parameters, svm_parameters)     
+                                  tree_parameters, knn_parameters, forest_parameters)     
 
     
-        print(f"The best model is {model_name} with parameter = {parameter}.\n ")
+        print(f"The best model is {model_name} with parameter = {parameter}.")
         print(f"score = {score}")
         
         
@@ -89,25 +95,38 @@ if __name__ == '__main__':
             y_LS_pairs = load_from_csv(os.path.join("features", "y_LS.csv"))
     
         print("Done.")
-    
-        print("Learning with a simple tree...")
         
-        print(X_LS_pairs)
-        clf = tree(X_LS_pairs, y_LS_pairs)
         
-    
-        print("Done.")
+        tree_ = False
+        if tree_ == True:
+            print("Learning with a tree...")
+            
+            parameter = 9
+            model = tree
+            clf = model(X_LS_pairs, y_LS_pairs, parameter)
+            
+            print("Done.")
+            
+            
+        random_forest_ = True
+        if random_forest_ == True:
+            print("Learning with a random forest...")
+            
+            parameter = 120
+            model = random_forest
+            clf = model(X_LS_pairs, y_LS_pairs, parameter)
+            
+            print("Done.")
+            
 
-    
     # ------------------------------- Cross validation ------------------------------- #
     
         print("Evalution of the accuracy with cross validation...")
         
         k = 5     
-        max_depth = 10
-        cv_score = k_fold_cv_score(X_LS_pairs, y_LS_pairs, k, tree, max_depth)
+        cv_score = k_fold_cv_score(X_LS_pairs, y_LS_pairs, k, model, parameter)
         
-        print(cv_score)
+        print(f"k fold score = {cv_score}")
         
         print("Done.")  
     
