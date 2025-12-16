@@ -9,7 +9,7 @@ from contextlib import contextmanager
 import numpy as np
 from sklearn.metrics import make_scorer
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import cross_val_score, KFold
+from sklearn.svm import SVC
 
 from file_interface import load_from_csv, write_submission
 
