@@ -25,7 +25,7 @@ def accuracy(clf, X_TS_pairs, y_TS_pairs):
 
     return (nb_right_predictions / nb_passes)
 
-def brier_score(y_true, p_predict):
+def brier_score(y_true: NDArray[np.int64], p_predict: NDArray[np.float64]) -> float:
     # Number of observations
     nb_obs = y_true.size
 
@@ -37,13 +37,13 @@ def brier_score(y_true, p_predict):
     # Compute score
     return ((p_ideal - p_predict)**2).sum()
 
-def k_fold_cv_score(X, y, k, training_model):
+def k_fold_cv_score(X_pairs, y_pairs, k, training_model, parameter):
     block = 22
-    n = X.shape[0]
-    usable_rows = (n // (k * block)) * (k * block)
-    X_truncated = X.iloc[:usable_rows]
-    y_truncated = y.iloc[:usable_rows]
-    size = usable_rows // k
+    n = X_pairs.shape[0]
+    usable_rows = (n // (k * block)) * (k * block) 
+    X_truncated = X_pairs.iloc[:usable_rows]
+    y_truncated = y_pairs.iloc[:usable_rows]
+    size = usable_rows // k  
     parts_X = [X_truncated.iloc[i * size : (i + 1) * size]
              for i in range(k)]
     parts_y = [y_truncated.iloc[i * size : (i + 1) * size]
@@ -59,7 +59,7 @@ def k_fold_cv_score(X, y, k, training_model):
         x_to_test = parts_X[i].reset_index(drop=True)
         y_to_test = parts_y[i].reset_index(drop=True)
       
-        trained_model = training_model(x_to_fit, y_to_fit)
+        trained_model = training_model(x_to_fit, y_to_fit, parameter)
         
         scores[i] = accuracy(trained_model, x_to_test, y_to_test)
     
