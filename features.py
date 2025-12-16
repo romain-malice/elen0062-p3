@@ -78,7 +78,7 @@ def make_features(X_, y_=None):
     positions = positions_array(X_)
     distances = distances_array(X_)
     angles = angle_array(X_)
-    columns_name  = ["pass_i", "sender", "receiver","same team", "dist_s_r", "d_min_s_opp", "d_min_s_teammate", 
+    columns_name  = ["pass_i", "sender", "x_s", "y_s", "receiver", "x_r", "y_r" "same team", "dist_s_r", "d_min_s_opp", "d_min_s_teammate", 
                      "d_min_r_opp", "d_min_r_teammate", "r_demarcation", "d_cm_team_s", "d_cm_team_r", "d_cm_opp_s",
                      "d_cm_opps_r", "d_team_goal_s", "d_team_goal_r", "d_opp_goal_s", "d_opp_goal_r"]
     X_pairs = pd.DataFrame(data=np.zeros((nb_passes*22, len(columns_name))), columns=columns_name)
@@ -132,7 +132,7 @@ def make_features(X_, y_=None):
                 d_min_r_opp = min(distances[i, receiver, teammates])
                 d_min_r_teammate = min(distances[i, receiver, opponents[opponents != receiver]])
             
-            X_pairs.iloc[idx] = [pass_idx, sender + 1, receiver + 1, int(same_team), dist_s_r, d_min_s_opp, d_min_s_teammate,
+            X_pairs.iloc[idx] = [pass_idx, sender + 1, positions[i, sender, 0], positions[i, sender, 1], receiver + 1, positions[i, receiver, 0], positions[i, receiver, 1], int(same_team), dist_s_r, d_min_s_opp, d_min_s_teammate,
                                   d_min_r_opp, d_min_r_teammate, view_angles[receiver], d_cm_team_s, d_cm_team_r, d_cm_opp_s,
                                  d_cm_opp_r, d_team_goal_s, d_team_goal_r, d_opp_goal_s, d_opp_goal_r]
             if not y_ is None:

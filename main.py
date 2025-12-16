@@ -47,10 +47,13 @@ def measure_time(label):
 
 
 if __name__ == '__main__':
+    # ------------------------------- Test ------------------------------- #
     
+
+
     # ------------------------------- Tuning ------------------------------- #
     
-    tune = True
+    tune = False
     if tune == True:
         print("Tuning in progress...")
         
@@ -63,7 +66,7 @@ if __name__ == '__main__':
         knn_parameters = [1, 5]
         forest_parameters = [25, 40, 60, 80, 95, 100, 105, 110, 120, 150]
         model_name, parameter, score = tuning(X_tuning, y_tuning, models, models_names,
-                                  tree_parameters, knn_parameters, forest_parameters)     
+                                  tree_parameters, knn_parameters, forest_parameters)
 
     
         print(f"The best model is {model_name} with parameter = {parameter}.")
@@ -108,7 +111,7 @@ if __name__ == '__main__':
             print("Done.")
             
             
-        random_forest_ = True
+        random_forest_ = False
         if random_forest_ == True:
             print("Learning with a random forest...")
             
@@ -124,7 +127,7 @@ if __name__ == '__main__':
         print("Evalution of the accuracy with cross validation...")
         
         k = 5     
-        cv_score = k_fold_cv_score(X_LS_pairs, y_LS_pairs, k, model, parameter)
+        #cv_score = k_fold_cv_score(X_LS_pairs, y_LS_pairs, k, model, parameter)
         
         print(f"k fold score = {cv_score}")
         
