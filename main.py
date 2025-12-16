@@ -9,6 +9,8 @@ from contextlib import contextmanager
 import numpy as np
 from sklearn.metrics import make_scorer
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+
 from sklearn.model_selection import cross_val_score, KFold
 
 from file_interface import load_from_csv, write_submission
@@ -47,13 +49,12 @@ def measure_time(label):
 
 
 if __name__ == '__main__':
-    # ------------------------------- Test ------------------------------- #
     
-
-
+    
+    
     # ------------------------------- Tuning ------------------------------- #
     
-    tune = False
+    tune = True
     if tune == True:
         print("Tuning in progress...")
         
@@ -63,16 +64,39 @@ if __name__ == '__main__':
         models = [tree, knn, random_forest]
         models_names = ["tree", "knn", "random forest"]
         tree_parameters = [5, 8, 10, 15, 20, 50, 70, 100]
-        knn_parameters = [1, 5]
+        knn_parameters = [5, 10, 15, 20]
         forest_parameters = [25, 40, 60, 80, 95, 100, 105, 110, 120, 150]
         model_name, parameter, score = tuning(X_tuning, y_tuning, models, models_names,
-                                  tree_parameters, knn_parameters, forest_parameters)
+                                  tree_parameters, knn_parameters, forest_parameters)     
 
     
         print(f"The best model is {model_name} with parameter = {parameter}.")
         print(f"score = {score}")
         
+    # ------------------------------- Features selection ------------------------------- #
+    
+    features_selection = False
+    if features_selection == True:
+        print("Features selection in progress...")
+        X_LS = load_from_csv('data/input_train_set.csv')
+        y_LS = load_from_csv('data/output_train_set.csv')
         
+        X_LS_pairs, y_LS_pairs = make_features(X_LS, y_LS)
+        
+        n_estimators = 105
+        max_depth = 8
+        clf = RandomForestClassifier(max_depth=max_depth, n_estimators=n_estimators)
+        clf.fit(X_LS_pairs, y_LS_pairs.values.ravel())
+        importances = clf.feature_importances_
+        sort = np.argsort(importances) 
+        print(sort)
+        print(importances[sort])
+        print(np.sum(importances))
+        
+        
+        print("Done.")
+        
+    
     # ------------------------------- Learning ------------------------------- #
     
     learning = False
@@ -104,22 +128,24 @@ if __name__ == '__main__':
         if tree_ == True:
             print("Learning with a tree...")
             
-            parameter = 9
+            parameter = 8
             model = tree
             clf = model(X_LS_pairs, y_LS_pairs, parameter)
             
             print("Done.")
             
             
-        random_forest_ = False
+        random_forest_ = True
         if random_forest_ == True:
             print("Learning with a random forest...")
             
-            parameter = 120
+            parameter = 105
             model = random_forest
             clf = model(X_LS_pairs, y_LS_pairs, parameter)
             
             print("Done.")
+    
+            
             
 
     # ------------------------------- Cross validation ------------------------------- #
@@ -127,9 +153,9 @@ if __name__ == '__main__':
         print("Evalution of the accuracy with cross validation...")
         
         k = 5     
-        #cv_score = k_fold_cv_score(X_LS_pairs, y_LS_pairs, k, model, parameter)
+        cv_score = k_fold_cv_score(X_LS_pairs, y_LS_pairs, k, model, parameter)
         
-        print(f"k fold score = {cv_score}")
+        print(f"Cross validation score = {cv_score}")
         
         print("Done.")  
     
