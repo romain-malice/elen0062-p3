@@ -4,7 +4,7 @@ import pandas as pd
 from features import make_features
 from evaluation import accuracy, k_fold_cv_score
 
-from models import tree, knn, svm
+from models import tree, knn, random_forest
 
 def data_process(X, y):
     n = int(0.7 * X.shape[0])
@@ -47,21 +47,21 @@ def tuning_knn(X, y, parameters):
     
     return best_parameter, score_TS 
 
-def tuning_svm(X, y, parameters):
+def tuning_forest(X, y, parameters):
     X_train_pairs, y_train_pairs, X_test_pairs, y_test_pairs = data_process(X, y)
         
-    k = 5
-    scores = [k_fold_cv_score(X_train_pairs, y_train_pairs, k, svm, p)
+    k = 3
+    scores = [k_fold_cv_score(X_train_pairs, y_train_pairs, k, random_forest, p)
               for p in parameters]
     best_parameter = parameters[np.argmax(scores)]
     
-    clf_test = svm(X_train_pairs, y_train_pairs, best_parameter)
+    clf_test = random_forest(X_train_pairs, y_train_pairs, best_parameter)
     score_TS = accuracy(clf_test, X_test_pairs, y_test_pairs)
     
     return best_parameter, score_TS 
 
 
-def tuning(X_tuning, y_tuning, models, models_names, tree_parameters, knn_parameters, svm_parameters):
+def tuning(X_tuning, y_tuning, models, models_names, tree_parameters, knn_parameters, forest_parameters):
     parts_X = np.array_split(X_tuning, 4)
     parts_y = np.array_split(y_tuning, 4)
     
@@ -70,27 +70,36 @@ def tuning(X_tuning, y_tuning, models, models_names, tree_parameters, knn_parame
     X_test = parts_X[3].reset_index(drop=True)
     y_test = parts_y[3].reset_index(drop=True)
     
-    print("Finding best parameters...")
-    
+    print("Finding best parameters for tree...")
     tree_parameter, tree_score = tuning_tree(parts_X[0].reset_index(drop=True),
                                              parts_y[0].reset_index(drop=True), tree_parameters)
-    
+    print(f"Best parameter for tree is {tree_parameter}")
+    print("Done.")
+    print("Finding best parameters for knn...")
     knn_parameter, knn_score = tuning_knn(parts_X[1].reset_index(drop=True), 
                                           parts_y[1].reset_index(drop=True), knn_parameters)
-    
-    svm_parameter, svm_score = tuning_svm(parts_X[2].reset_index(drop=True), 
-                                          parts_y[2].reset_index(drop=True), svm_parameters)
+    print(f"Best parameter for knn is {knn_parameter}")
+
+    print("Done.")
+    print("Finding best parameters for random forest...")
+    forest_parameter, forest_score = tuning_forest(parts_X[2].reset_index(drop=True), 
+                                     parts_y[2].reset_index(drop=True), forest_parameters)
+    print(f"Best parameter for random forest is {forest_parameter}")
+
     print("Done.")
     
     
     print("Finding best model....")
     
-    parameters = [tree_parameter, knn_parameter, svm_parameter]
-    scores = [tree_score, knn_score, svm_score]
+    parameters = [tree_parameter, knn_parameter, forest_parameter]
+    scores = [tree_score, knn_score, forest_score]
     idx_best = np.argmax(scores)
     best_model = models[idx_best]
     best_model_name = models_names[idx_best]
     best_parameter = parameters[idx_best]   
+    
+    print(models_names)
+    print(scores)
     
     print("Done.")
 
@@ -99,6 +108,7 @@ def tuning(X_tuning, y_tuning, models, models_names, tree_parameters, knn_parame
     
     X_train_pairs, y_train_pairs = make_features(X_train, y_train)
     X_test_pairs, y_test_pairs = make_features(X_test, y_test)
+    
    
     clf = best_model(X_train_pairs, y_train_pairs, best_parameter)
     score = accuracy(clf, X_test_pairs, y_test_pairs)
