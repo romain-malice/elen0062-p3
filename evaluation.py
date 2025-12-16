@@ -35,6 +35,7 @@ def brier_score(y_true: NDArray[np.int64], p_predict: NDArray[np.float64]) -> fl
     return ((p_ideal - p_predict)**2).sum()
 
 def k_fold_cv_score(X_pairs, y_pairs, k, training_model, parameter):
+    print(f"cross validation with parameter = {parameter} ")
     block = 22
     n = X_pairs.shape[0]
     usable_rows = (n // (k * block)) * (k * block) 
