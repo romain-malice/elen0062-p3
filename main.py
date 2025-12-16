@@ -9,7 +9,7 @@ from contextlib import contextmanager
 import numpy as np
 from sklearn.metrics import make_scorer
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score, KFold
 
 from file_interface import load_from_csv, write_submission
 
@@ -17,7 +17,7 @@ from features import make_features, write_features_file
 from evaluation import proba_to_player, accuracy, k_fold_cv_score
 from tuning import tuning
 
-from models import tree
+from models import tree, knn, svm
 
 @contextmanager
 def measure_time(label):
@@ -43,17 +43,25 @@ if __name__ == '__main__':
     
     # ------------------------------- Tuning ------------------------------- #
     
-    tuning = True
-    if tuning == True:
-        print("Tuning in process...")
+    tune = True
+    if tune == True:
+        print("Tuning in progress...")
         
         X_tuning = load_from_csv('data/input_train_set.csv')
         y_tuning = load_from_csv('data/output_train_set.csv')
         
-        model, parameter = tuning(X_tuning, y_tuning)     
+        models = [tree, knn, svm]
+        models_names = ["tree", "knn", "svm"]
+        tree_parameters = [5, 10, 20, 30, 50]
+        knn_parameters = [1, 5, 10, 20, 30]
+        svm_parameters = [0.01, 0.1, 1, 10, 100] 
+        
+        model_name, parameter, score = tuning(X_tuning, y_tuning, models, models_names,
+                                  tree_parameters, knn_parameters, svm_parameters)     
 
     
-        print(f"The best model is {model} with parameter {parameter}. ")
+        print(f"The best model is {model_name} with parameter = {parameter}.\n ")
+        print(f"score = {score}")
         
         
     # ------------------------------- Learning ------------------------------- #
