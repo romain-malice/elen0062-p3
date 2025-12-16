@@ -18,7 +18,11 @@ def data_process(X, y):
     X_train_pairs, y_train_pairs = make_features(X_train, y_train)
     X_test_pairs, y_test_pairs = make_features(X_test, y_test)
     
-    return X_train_pairs, y_train_pairs, X_test_pairs, y_test_pairs
+    cols = ['dist_s_r', 'r_demarcation', 'same team', 'd_min_r_opp']
+    X_pairs_filtered_train = X_train_pairs[cols].copy()
+    X_pairs_filtered_test = X_test_pairs[cols].copy()
+    
+    return X_pairs_filtered_train, y_train_pairs, X_pairs_filtered_test, y_test_pairs
     
 
 def tuning_tree(X, y, parameters):
@@ -89,7 +93,7 @@ def tuning(X_tuning, y_tuning, models, models_names, tree_parameters, knn_parame
     print("Done.")
     
     
-    print("Finding best model....")
+    print("Finding best model...")
     
     parameters = [tree_parameter, knn_parameter, forest_parameter]
     scores = [tree_score, knn_score, forest_score]
@@ -104,12 +108,12 @@ def tuning(X_tuning, y_tuning, models, models_names, tree_parameters, knn_parame
     print("Done.")
 
 
-    print("Evaluating the best model..")
+    print("Evaluating the best model with filtered features...")
     
     X_train_pairs, y_train_pairs = make_features(X_train, y_train)
     X_test_pairs, y_test_pairs = make_features(X_test, y_test)
     
-   
+
     clf = best_model(X_train_pairs, y_train_pairs, best_parameter)
     score = accuracy(clf, X_test_pairs, y_test_pairs)
 
