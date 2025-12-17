@@ -108,9 +108,6 @@ def make_features(X_, y_=None):
         inverse_indices = np.argsort(sort_indices)
 
         sorted_angles = angles[i, sort_indices]
-        continuous_sorted_angles = np.concatenate(([sorted_angles[-1] - 2*np.pi], sorted_angles, [sorted_angles[0] + 2*np.pi]))
-        view_angles_wrong_idx = continuous_sorted_angles[2:] - continuous_sorted_angles[:-2]
-        view_angles = view_angles_wrong_idx[inverse_indices]
 
         for receiver in range(0, 22):
             same_team = same_team_(sender, receiver)
@@ -125,6 +122,10 @@ def make_features(X_, y_=None):
             
             d_team_goal_r, d_opp_goal_r = distances_to_goals(positions[i], receiver)
 
+            close_players_angles = sorted_angles[distances[i, sender, sorted_angles] < 2 * distances[i, sender, receiver]]
+            continuous_sorted_angles = np.concatenate(([close_players_angles[-1] - 2*np.pi], close_players_angles, [close_players_angles[0] + 2*np.pi]))
+            view_angle = continuous_sorted_angles[receiver + 2] - continuous_sorted_angles[receiver]
+
             if same_team is True:
                 d_min_r_opp = min(distances[i, receiver, opponents])
                 d_min_r_teammate = min(distances[i, receiver, teammates[teammates != receiver]])
@@ -135,7 +136,7 @@ def make_features(X_, y_=None):
             X_pairs.iloc[idx] = [pass_idx, sender + 1, positions[i, sender, 0], positions[i, sender, 1], 
                                  receiver + 1, positions[i, receiver, 0], positions[i, receiver, 1], 
                                  int(same_team), dist_s_r, d_min_s_opp, d_min_s_teammate,
-                                 d_min_r_opp, d_min_r_teammate, view_angles[receiver], d_cm_team_s, d_cm_team_r, d_cm_opp_s,
+                                 d_min_r_opp, d_min_r_teammate, view_angle, d_cm_team_s, d_cm_team_r, d_cm_opp_s,
                                  d_cm_opp_r, d_team_goal_s, d_team_goal_r, d_opp_goal_s, d_opp_goal_r]
             if not y_ is None:
                 y_pairs.loc[idx, "pass"] = int(receiver == y_.loc[pass_idx].values[0] - 1)
