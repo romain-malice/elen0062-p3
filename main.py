@@ -16,7 +16,7 @@ from sklearn.model_selection import cross_val_score, KFold
 from file_interface import load_from_csv, write_submission
 
 from features import make_features, write_features_file
-from evaluation import proba_to_player, accuracy, k_fold_cv_score
+from evaluation import proba_to_player, accuracy, k_fold_cv_score, split_dataset
 from tuning import tuning
 
 from models import tree, knn, random_forest, gradient_boosting
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     nb_passes_LS = X_LS.shape[0]
 
     # X_features : (nb_samples, nb_features)
-    new_features = True
+    new_features = False
     if new_features is True:
         print("Computing features...")
         with measure_time('Features'):
@@ -75,25 +75,29 @@ if __name__ == '__main__':
     # ------------------------------- Features selection ------------------------------- #
     
     feature_selection = True
-    if feature_selection == True:
+    if feature_selection is True:
         print("Feature selection in progress...")
 
         n_estimators = 105
         max_depth = 8
+        k = 5
         clf = RandomForestClassifier(max_depth=max_depth, n_estimators=n_estimators)
+        parts_X, parts_y = split_dataset(X_LS_pairs, y_LS_pairs, k)
         with measure_time("Feature selection"):
-            clf.fit(X_LS_pairs, y_LS_pairs.values.ravel())
-        importances = clf.feature_importances_
-        sort = np.argsort(importances)[::-1] 
-        print("Features importance ranking (most to least significant):")
-        print(X_LS_pairs.columns[sort])
-        print(importances[sort])
+            importances = np.zeros([k, len(X_LS_pairs.columns)])
+            for i, (X, y) in enumerate(zip(parts_X, parts_y)):
+                print(f"Starting evaluation on fold {i + 1} out of {k}")
+                clf.fit(X_LS_pairs, y_LS_pairs.values.ravel())
+                importances[i] = clf.feature_importances_
+        importances = np.mean(importances, axis=0)
+        print(X_LS_pairs.columns)
+        print(importances)
 
         print("Done.")
 
     # ------------------------------- Tuning ------------------------------- #
     
-    tune = False
+    tune = True
     if tune == True:
         print("Tuning in progress...")
         
@@ -106,8 +110,9 @@ if __name__ == '__main__':
         knn_parameters = [1]
         forest_parameters = [50, 100, 150]
         gradient_boosting_parameters = [50, 100, 150, 200]
-        model_name, parameter, score = tuning(X_tuning, y_tuning, models, models_names,
-                                  tree_parameters, knn_parameters, forest_parameters, gradient_boosting_parameters)
+        # Trees
+        for p in tree_parameters:
+            for 
          
         print(f"The best model is {model_name} with parameter = {parameter}.")
         print(f"score = {score}")
