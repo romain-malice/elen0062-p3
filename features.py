@@ -122,9 +122,17 @@ def make_features(X_, y_=None):
             
             d_team_goal_r, d_opp_goal_r = distances_to_goals(positions[i], receiver)
 
-            close_players_angles = sorted_angles[distances[i, sender, sorted_angles] < 2 * distances[i, sender, receiver]]
-            continuous_sorted_angles = np.concatenate(([close_players_angles[-1] - 2*np.pi], close_players_angles, [close_players_angles[0] + 2*np.pi]))
-            view_angle = continuous_sorted_angles[receiver + 2] - continuous_sorted_angles[receiver]
+            if sender == receiver:
+                view_angle = 0.0
+            else:
+                mask = distances[i, sender, sort_indices] <= 1.5 * distances[i, sender, receiver]
+                print(distances[i, sender, sort_indices])
+                print(1.2 * distances[i, sender, receiver])
+                print(mask)
+                close_players_angles = sorted_angles[mask]
+                continuous_sorted_angles = np.concatenate(([close_players_angles[-1] - 2*np.pi], close_players_angles, [close_players_angles[0] + 2*np.pi]))
+                new_receiver_idx = mask[:inverse_indices[receiver]].sum()
+                view_angle = continuous_sorted_angles[new_receiver_idx + 2] - continuous_sorted_angles[new_receiver_idx]
 
             if same_team is True:
                 d_min_r_opp = min(distances[i, receiver, opponents])
