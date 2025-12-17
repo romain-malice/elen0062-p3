@@ -61,7 +61,7 @@ def k_fold_cv_score(X_pairs, y_pairs, k, training_model, parameter):
         
         scores[i] = accuracy(trained_model, x_to_test, y_to_test)
     
-    return np.mean(scores)
+    return np.mean(scores), np.var(scores)
 
 
 if __name__ == "__main__":

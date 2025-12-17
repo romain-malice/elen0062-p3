@@ -49,9 +49,51 @@ def measure_time(label):
 
 
 if __name__ == '__main__':
+        
+    # ------------------------------- Features extraction ------------------------------- #
+    print("Getting features...")
+
+    X_LS = load_from_csv('data/input_train_set.csv')
+    y_LS = load_from_csv('data/output_train_set.csv')
+    
+    nb_passes_LS = X_LS.shape[0]
+
+    # X_features : (nb_samples, nb_features)
+    new_features = True
+    if new_features is True:
+        print("Computing features...")
+        with measure_time('Features'):
+            X_LS_pairs, y_LS_pairs = make_features(X_LS, y_LS)
+            write_features_file(X_LS_pairs, "X_LS")
+            write_features_file(y_LS_pairs, "y_LS")
+    else:
+        print("Loading features from file...")
+        X_LS_pairs = load_from_csv(os.path.join("features", "X_LS.csv"))
+        y_LS_pairs = load_from_csv(os.path.join("features", "y_LS.csv"))
+
+    print("Done.")
+    # ------------------------------- Features selection ------------------------------- #
+    
+    feature_selection = True
+    if feature_selection == True:
+        print("Feature selection in progress...")
+
+        n_estimators = 105
+        max_depth = 8
+        clf = RandomForestClassifier(max_depth=max_depth, n_estimators=n_estimators)
+        with measure_time("Feature selection"):
+            clf.fit(X_LS_pairs, y_LS_pairs.values.ravel())
+        importances = clf.feature_importances_
+        sort = np.argsort(importances)[::-1] 
+        print("Features importance ranking (most to least significant):")
+        print(X_LS_pairs.columns[sort])
+        print(importances[sort])
+
+        print("Done.")
+
     # ------------------------------- Tuning ------------------------------- #
     
-    tune = True
+    tune = False
     if tune == True:
         print("Tuning in progress...")
         
@@ -69,65 +111,19 @@ if __name__ == '__main__':
          
         print(f"The best model is {model_name} with parameter = {parameter}.")
         print(f"score = {score}")
-        
-    # ------------------------------- Features selection ------------------------------- #
-    
-    features_selection = False
-    if features_selection == True:
-        print("Features selection in progress...")
-        X_LS = load_from_csv('data/input_train_set.csv')
-        y_LS = load_from_csv('data/output_train_set.csv')
-        
-        X_LS_pairs, y_LS_pairs = make_features(X_LS, y_LS)
-        
-        n_estimators = 105
-        max_depth = 8
-        clf = RandomForestClassifier(max_depth=max_depth, n_estimators=n_estimators)
-        clf.fit(X_LS_pairs, y_LS_pairs.values.ravel())
-        importances = clf.feature_importances_
-        sort = np.argsort(importances) 
-        print(sort)
-        print(importances[sort])
-        print(np.sum(importances))
-        
-        
-        print("Done.")
-        
     
     # ------------------------------- Learning ------------------------------- #
     
-    learning = True
+    learning = False
     if learning == True:
-        print("Loading data...")
-    
-        X_LS = load_from_csv('data/input_train_set.csv')
-        y_LS = load_from_csv('data/output_train_set.csv')
-        
-        nb_passes_LS = X_LS.shape[0]
-    
-        print("Done.")
-        print("Deriving features...")
-    
-        # X_features : (nb_samples, nb_features)
-        new_features = True
-        if new_features is True:
-            X_LS_pairs, y_LS_pairs = make_features(X_LS, y_LS)
-            write_features_file(X_LS_pairs, "X_LS")
-            write_features_file(y_LS_pairs, "y_LS")
-        else:
-            X_LS_pairs = load_from_csv(os.path.join("features", "X_LS.csv"))
-            y_LS_pairs = load_from_csv(os.path.join("features", "y_LS.csv"))
-    
-        print("Done.")
-        
-        
         tree_ = False
         if tree_ == False:
             print("Learning with a tree...")
             
             parameter = 8
             model = tree
-            clf = model(X_LS_pairs, y_LS_pairs, parameter)
+            with measure_time("Tree learning"):
+                clf = model(X_LS_pairs, y_LS_pairs, parameter)
             
             print("Done.")
             
@@ -138,40 +134,44 @@ if __name__ == '__main__':
             
             parameter = 105
             model = random_forest
-            clf = model(X_LS_pairs, y_LS_pairs, parameter)
+            with measure_time("Random forest learning"):
+                clf = model(X_LS_pairs, y_LS_pairs, parameter)
             
             print("Done.")
     
-            
-            
         gb = True
         if gb == True:
             print("Learning with a gb...")
             
             parameter = 200
             model = gradient_boosting
-            clf = model(X_LS_pairs, y_LS_pairs, parameter)
+            with measure_time("Gradient boosting"):
+                clf = model(X_LS_pairs, y_LS_pairs, parameter)
             
             print("Done.")
 
     # ------------------------------- Cross validation ------------------------------- #
     
+    cv = False
+    if cv is True:
         print("Evalution of the accuracy with cross validation...")
-        
-        k = 5     
-        cv_score = k_fold_cv_score(X_LS_pairs, y_LS_pairs, k, model, parameter)
-        
-        print(f"Cross validation score = {cv_score}")
-        
+    
+        k = 5
+        with measure_time("Cross validation"):
+            cv_score, cv_var = k_fold_cv_score(X_LS_pairs, y_LS_pairs, k, model, parameter)
+        print(f"Cross validation score = {cv_score}, and variance = {cv_var}")
+    
         print("Done.")  
     
 
     # ------------------------------ Prediction ------------------------------ #
     
+    submission = False
+    if submission is True:
         # Load test data
         X_TS = load_from_csv('data/input_test_set.csv')
         nb_passes_TS = X_TS.shape[0]
-    
+
         # Same transformation as LS
         new_features = True
         if new_features is True:
@@ -179,14 +179,14 @@ if __name__ == '__main__':
             write_features_file(X_TS_pairs, "X_TS")
         else:
             X_TS_pairs = load_from_csv(os.path.join("features", "X_TS.csv"))
-    
+
         # Predict
         proba_pairs = clf.predict_proba(X_TS_pairs)
         player_predictions, proba_passes = proba_to_player(proba_pairs)
         
         # Estimated score of the model
         predicted_score = cv_score
-    
+
         # Making the submission file
         fname = write_submission(predictions=player_predictions, probas=proba_passes, estimated_score=predicted_score, file_name="results/submission")
         print('Submission file "{}" successfully written'.format(fname))
