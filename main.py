@@ -110,9 +110,13 @@ if __name__ == '__main__':
         knn_parameters = [1]
         forest_parameters = [50, 100, 150]
         gradient_boosting_parameters = [50, 100, 150, 200]
+
         # Trees
+        parts_X, part_y = split_dataset(X_LS_pairs, y_LS_pairs, 5, shuffle=True)
         for p in tree_parameters:
-            for 
+            for i, (X, y) in enumerate(zip(parts_X, part_y)):
+                pass
+
          
         print(f"The best model is {model_name} with parameter = {parameter}.")
         print(f"score = {score}")
