@@ -19,7 +19,7 @@ from features import make_features, write_features_file
 from evaluation import proba_to_player, accuracy, k_fold_cv_score
 from tuning import tuning
 
-from models import tree, knn, random_forest
+from models import tree, knn, random_forest, gradient_boosting
 
 import warnings
 warnings.filterwarnings(
@@ -49,9 +49,6 @@ def measure_time(label):
 
 
 if __name__ == '__main__':
-    
-    
-    
     # ------------------------------- Tuning ------------------------------- #
     
     tune = True
@@ -61,15 +58,15 @@ if __name__ == '__main__':
         X_tuning = load_from_csv('data/input_train_set.csv')
         y_tuning = load_from_csv('data/output_train_set.csv')
         
-        models = [tree, knn, random_forest]
-        models_names = ["tree", "knn", "random forest"]
-        tree_parameters = [5, 8, 10, 15, 20, 50, 70, 100]
-        knn_parameters = [5, 10, 15, 20]
-        forest_parameters = [25, 40, 60, 80, 95, 100, 105, 110, 120, 150]
+        models = [tree, knn, random_forest, gradient_boosting]
+        models_names = ["tree", "knn", "random forest", "gradient_boosting"]
+        tree_parameters = [1]
+        knn_parameters = [1]
+        forest_parameters = [50, 100, 150]
+        gradient_boosting_parameters = [50, 100, 150, 200]
         model_name, parameter, score = tuning(X_tuning, y_tuning, models, models_names,
-                                  tree_parameters, knn_parameters, forest_parameters)     
-
-    
+                                  tree_parameters, knn_parameters, forest_parameters, gradient_boosting_parameters)
+         
         print(f"The best model is {model_name} with parameter = {parameter}.")
         print(f"score = {score}")
         
@@ -99,7 +96,7 @@ if __name__ == '__main__':
     
     # ------------------------------- Learning ------------------------------- #
     
-    learning = False
+    learning = True
     if learning == True:
         print("Loading data...")
     
@@ -125,7 +122,7 @@ if __name__ == '__main__':
         
         
         tree_ = False
-        if tree_ == True:
+        if tree_ == False:
             print("Learning with a tree...")
             
             parameter = 8
@@ -147,6 +144,15 @@ if __name__ == '__main__':
     
             
             
+        gb = True
+        if gb == True:
+            print("Learning with a gb...")
+            
+            parameter = 200
+            model = gradient_boosting
+            clf = model(X_LS_pairs, y_LS_pairs, parameter)
+            
+            print("Done.")
 
     # ------------------------------- Cross validation ------------------------------- #
     

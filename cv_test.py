@@ -37,3 +37,6 @@ x_to_fit = parts[:k] + parts[k+1:]
 
 x = pd.concat(x_to_fit, ignore_index=True)
 print(x)
+
+X_features_filtered = pd.concat(
+        [])
