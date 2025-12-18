@@ -9,17 +9,19 @@ from contextlib import contextmanager
 import numpy as np
 from sklearn.metrics import make_scorer
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
 from sklearn.model_selection import cross_val_score, KFold
 
 from file_interface import load_from_csv, write_submission
 
 from features import make_features, write_features_file
-from evaluation import proba_to_player, accuracy, k_fold_cv_score, split_dataset
+from evaluation import proba_to_player, accuracy, k_fold_cv_score, split_dataset, k_fold_sets
 from tuning import tuning
 
-from models import tree, knn, random_forest, gradient_boosting
+from models import *
 
 import warnings
 warnings.filterwarnings(
@@ -74,7 +76,7 @@ if __name__ == '__main__':
     print("Done.")
     # ------------------------------- Features selection ------------------------------- #
     
-    feature_selection = True
+    feature_selection = False
     if feature_selection is True:
         print("Feature selection in progress...")
 
@@ -92,34 +94,131 @@ if __name__ == '__main__':
         importances = np.mean(importances, axis=0)
         print(X_LS_pairs.columns)
         print(importances)
+        # 
 
         print("Done.")
 
     # ------------------------------- Tuning ------------------------------- #
     
-    tune = True
+    tune = False
+    tune2 = True
     if tune == True:
         print("Tuning in progress...")
-        
-        X_tuning = load_from_csv('data/input_train_set.csv')
-        y_tuning = load_from_csv('data/output_train_set.csv')
-        
-        models = [tree, knn, random_forest, gradient_boosting]
-        models_names = ["tree", "knn", "random forest", "gradient_boosting"]
-        tree_parameters = [1]
-        knn_parameters = [1]
-        forest_parameters = [50, 100, 150]
-        gradient_boosting_parameters = [50, 100, 150, 200]
 
-        # Trees
-        parts_X, part_y = split_dataset(X_LS_pairs, y_LS_pairs, 5, shuffle=True)
-        for p in tree_parameters:
-            for i, (X, y) in enumerate(zip(parts_X, part_y)):
-                pass
+        models = [tree, knn, svm_lin, svm_rbf, random_forest, gradient_boosting]
+        
+        # Testing 5 parameters for each model
+        max_depths = [5, 10, 25, 50, 100]
+        nb_neigh = [1, 11, 21, 31, 51]
+        c_svm = [0.01, 0.1, 1, 50, 100]
+        kernel_svm = ['linear', 'rbf']
+        nb_trees_forest = [10, 50, 100, 150, 200]
+        nb_trees_gb = [100, 150, 200, 250, 300]
 
-         
-        print(f"The best model is {model_name} with parameter = {parameter}.")
-        print(f"score = {score}")
+        models_param = [max_depths, nb_neigh, c_svm, c_svm, nb_trees_forest, nb_trees_gb]
+
+        # Initializing scores
+        tree_scores = np.zeros([25, 5])
+        knn_scores = np.zeros([25, 5])
+        svm_lin_scores = np.zeros([25, 5])
+        svm_rbf_scores = np.zeros([25, 5])
+        forest_scores = np.zeros([25, 5])
+        boost_scores = np.zeros([25, 5])
+
+        best_model_scores = np.zeros(5)
+
+        k = 5
+        X_learn_out, y_learn_out, X_test_out, y_test_out = k_fold_sets(X_LS_pairs, y_LS_pairs, k, shuffle=True)
+        for i, (Xlo, ylo, Xto, yto) in enumerate(zip(X_learn_out, y_learn_out, X_test_out, y_test_out)):
+            # Outer loop -> model evaluation
+            print(f"Starting {i + 1}th outer fold...")
+
+            X_learn_in, y_learn_in, X_test_in, y_test_in = k_fold_sets(Xlo, ylo, k, shuffle=True)
+            for j, (Xli, yli, Xti, yti) in enumerate(zip(X_learn_in, y_learn_in, X_test_in, y_test_in)):
+                # Inner loop -> model selection
+                print(f"Starting {j + 1}th inner fold...")
+
+                # Test all models
+
+                # Testing trees
+                print("Learning trees...")
+                trees = [DecisionTreeClassifier(max_depth=d) for d in max_depths]
+                for l, tree in enumerate(trees):
+                    with measure_time("tree"):
+                        tree.fit(Xli, yli.values.ravel())
+                        tree_scores[k * i + j, l] = accuracy(tree, Xti, yti)
+                print("Done")
+
+                # Testing knn
+                print("Learning knn...")
+                knns = [KNeighborsClassifier(n_neighbors=neigh) for neigh in nb_neigh]
+                for l, knn in enumerate(knns):
+                    with measure_time("knn"):
+                        knn.fit(Xli, yli.values.ravel())
+                        knn_scores[k * i + j, l] = accuracy(knn, Xti, yti)
+                print("Done")
+
+                # Testing svms
+                #print("Learning linear svm...")
+                #svm_lin = [SVC(kernel='linear', C=c, verbose=True) for c in c_svm]
+                #for l, sl in enumerate(svm_lin):
+                #    with measure_time("linear svm"):
+                #        sl.fit(Xli, yli.values.ravel())
+                #        svm_lin_scores[k * i + j, l] = accuracy(sl, Xti, yti)
+                #print("Done")
+
+                #print("Learning rbf svm...")
+                #svm_rbf = [SVC(kernel='rbf', C=c, verbose=True) for c in c_svm]
+                #for l, sr in enumerate(svm_rbf):
+                #    with measure_time("rbf svm"):
+                #        sr.fit(Xli, yli.values.ravel())
+                #        svm_rbf_scores[k * i + j, l] = accuracy(sr, Xti, yti)
+                #print("Done")
+
+                # Testing random forests
+                print("Learning forests...")
+                forests = [RandomForestClassifier(n_estimators=nt, verbose=True, n_jobs=8) for nt in nb_trees_forest]
+                for l, rf in enumerate(forests):
+                    with measure_time("forest"):
+                        rf.fit(Xli, yli.values.ravel())
+                        forest_scores[k * i + j, l] = accuracy(rf, Xti, yti)
+                print("Done")
+
+                # Testing gradient boosting
+                print("Learning boosters...")
+                boosters = [GradientBoostingClassifier(n_estimators=nt, verbose=1) for nt in nb_trees_gb]
+                for l, gb in enumerate(boosters):
+                    with measure_time("gradient boosting"):
+                        gb.fit(Xli, yli.values.ravel())
+                        boost_scores[k*i + j, l] = accuracy(gb, Xti, yti)
+                print("Done")
+
+            # i-th inner k-fold done -> find the best model
+
+            tree_s = np.mean(tree_scores[k*i:k*(i+1)], axis=0)
+            knn_s = np.mean(knn_scores[k*i:k*(i+1)], axis=0)
+            sl_s = np.mean(svm_lin_scores[k*i:k*(i+1)], axis=0)
+            sr_s = np.mean(svm_rbf_scores[k*i:k*(i+1)], axis=0)
+            forest_s = np.mean(forest_scores[k*i:k*(i+1)], axis=0)
+            boost_s = np.mean(boost_scores[k*i:k*(i+1)], axis=0)
+            
+            mean_scores = np.array([tree_s, knn_s, sl_s, sr_s, forest_s, boost_s])
+            best_model_idx, best_param_idx = np.unravel_index(np.argmax(mean_scores), mean_scores.shape)
+
+            # Train the best model for that outer fold
+            best_model = models[best_model_idx](Xlo, ylo, models_param[best_model_idx][best_param_idx])
+            # Test the model
+            best_model_scores[i] = accuracy(best_model, Xto, yto)
+            print(f"Best performances on {i + 1}th fold:\
+                  {models[best_model_idx].__name__} with parameter value of\
+                  {models_param[best_model_idx][best_param_idx]} scored {best_model_scores[i]}% accuracy")
+
+        # Out of the loop
+        print(f"Final score: {np.mean(best_model_scores)}")
+        pd.DataFrame(tree_scores, columns=pd.Index(max_depths)).to_csv("tuning/tree.csv")
+        pd.DataFrame(knn_scores, columns=pd.Index(max_depths)).to_csv("tuning/knn.csv")
+        pd.DataFrame(forest_scores, columns=pd.Index(max_depths)).to_csv("tuning/forest.csv")
+        pd.DataFrame(boost_scores, columns=pd.Index(max_depths)).to_csv("tuning/gradient_boosting.csv")
     
     # ------------------------------- Learning ------------------------------- #
     

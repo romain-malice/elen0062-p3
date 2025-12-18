@@ -19,11 +19,21 @@ def knn(X_LS_pairs, y_LS_pairs, n_neighbors):
 
 def random_forest(X_LS_pairs, y_LS_pairs, parameter):
     max_depth = 9
-    clf = RandomForestClassifier(max_depth=max_depth, n_estimators=parameter)
+    clf = RandomForestClassifier(max_depth=max_depth, n_estimators=parameter, n_jobs=8)
     clf.fit(X_LS_pairs, y_LS_pairs.values.ravel())
     return clf
 
 def gradient_boosting(X_LS_pairs, y_LS_pairs, parameter):
     clf = GradientBoostingClassifier(n_estimators=parameter, verbose=1)
+    clf.fit(X_LS_pairs, y_LS_pairs.values.ravel())
+    return clf
+
+def svm_lin(X_LS_pairs, y_LS_pairs, parameter):
+    clf = SVC(kernel='linear', C=parameter, verbose=True)
+    clf.fit(X_LS_pairs, y_LS_pairs.values.ravel())
+    return clf
+
+def svm_rbf(X_LS_pairs, y_LS_pairs, parameter):
+    clf = SVC(kernel='rbf', C=parameter, verbose=True)
     clf.fit(X_LS_pairs, y_LS_pairs.values.ravel())
     return clf
